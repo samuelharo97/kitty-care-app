@@ -564,4 +564,33 @@ export const signUpWithOTPAPI = async (userData: SignupState) => {
   }
 };
 
+export interface GoogleLoginResponse {
+  session: { access_token: string; expires_in: string };
+  user: {
+    email: string;
+    name?: string;
+    given_name?: string;
+    picture: string;
+  };
+}
+
+export const loginWithGoogleAPI = async (
+  idToken: string
+): Promise<GoogleLoginResponse> => {
+  try {
+    console.log('Using base URL:', baseURL);
+    console.log('Making request to /auth/google with idToken:', idToken);
+    const response = await API.post('/auth/google', { idToken });
+    console.log('Response from /auth/google:', response);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error in loginWithGoogleAPI:', error);
+    throw new Error(
+      error.response?.data?.error ||
+        error.response?.data?.message ||
+        'Google login failed'
+    );
+  }
+};
+
 export default baseURL;
