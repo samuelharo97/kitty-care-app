@@ -22,6 +22,40 @@ This repository contains a solution for the KittyCare take-home challenge. The s
 
 ## Setup Instructions
 
+## Environment Variable Setup for Google OAuth Credentials
+
+To properly configure your application for Google OAuth, you'll need to set up your environment variables in a `.env` file for both the backend and frontend. Below are the steps and examples.
+
+### Obtaining Your Google OAuth Credentials
+
+1. **Create or Select a Project:**
+
+   - Go to the [Google Cloud Console](https://console.cloud.google.com/).
+   - Create a new project or select an existing one.
+
+2. **Enable OAuth and Create Credentials:**
+   - Navigate to **APIs & Services** → **Credentials**.
+   - Click **Create Credentials** and select **OAuth 2.0 Client IDs**.
+   - Configure the following:
+     - **Authorized JavaScript Origins:**  
+       For local development, add:  
+       `http://localhost:3000`
+     - **Authorized Redirect URIs:**  
+       (If using a callback URL in your application) e.g.,  
+       `http://localhost:3000/auth/callback`
+   - Copy the generated **Client ID**.
+
+### For the Backend
+
+Create a `.env` file in your backend root directory and include the following variables:
+
+```env
+PORT=3000
+JWT_SECRET=your_jwt_secret_here
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+FRONTEND_URL=http://localhost:3000
+```
+
 ### 1. Backend Setup
 
 1. **Navigate to the backend directory:**
@@ -30,7 +64,7 @@ This repository contains a solution for the KittyCare take-home challenge. The s
 cd kittycare_backend
 pnpm install
 create .env following .env-example
-pnpm run dev
+pnpm run dev```
 ````
 
 ## 2. Frontend Setup
@@ -71,6 +105,7 @@ Once the application is running, you can manually verify that everything works a
 
 - **LocalStorage Verification:**  
   After a successful login, check the browser’s localStorage:
+
   - Ensure that the token, expiration timestamp, and profile photo (if provided) are stored.
   - Confirm that the expiration timestamp is a valid numeric value (provided by the backend).
 
