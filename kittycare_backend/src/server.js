@@ -14,13 +14,13 @@ app.use('/api/openai', openaiRoutes);
 app.use('/api/supabase', supabaseRoutes);
 app.use('/api/payments', paymentRoutes);
 app.get('/', (req, res) => {
-    res.send('Server is up and running! 😸');
+  res.send('Server is up and running! 😸');
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
 
 module.exports = app;
