@@ -7,8 +7,11 @@ const STYLES = {
   container: 'mt-[20px] flex gap-[10px] flex-col h-auto',
   label: 'text-base sm:text-xl font-bold sm:font-medium ',
   inputWrapper: 'w-full h-[52px] relative',
-  input: 'w-full h-[55px] p-auto sm:py-4 px-[24px] text-base sm:text-xl border-2 rounded-lg',
-  toggleButton: 'absolute right-3 top-[55%] transform -translate-y-1/2 border-none hover:border-none focus:outline-none bg-transparent',
+  // Default border color is applied here; will be overridden if error exists.
+  input:
+    'w-full h-[55px] p-auto sm:py-4 px-[24px] text-base sm:text-xl border-2 rounded-lg',
+  toggleButton:
+    'absolute right-3 top-[55%] transform -translate-y-1/2 border-none hover:border-none focus:outline-none bg-transparent',
   icon: 'h-5 w-5 text-gray-500',
   errorText: 'text-red-500 text-base text-center ms-6 -mt-[6px] relative'
 } as const;
@@ -22,7 +25,7 @@ const TextInput = ({
   error = '',
   onChange,
   maxLength,
-  'aria-label': ariaLabel,
+  'aria-label': ariaLabel
 }: TextInputProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -33,18 +36,16 @@ const TextInput = ({
   };
 
   const togglePasswordVisibility = () => {
-    setShowPassword((prev) => !prev);
+    setShowPassword(prev => !prev);
   };
 
-  const inputType = type === 'password' ? (showPassword ? 'text' : 'password') : type;
+  const inputType =
+    type === 'password' ? (showPassword ? 'text' : 'password') : type;
 
   return (
     <div className={STYLES.container}>
       {label && (
-        <label
-          htmlFor={name}
-          className={STYLES.label}
-        >
+        <label htmlFor={name} className={STYLES.label}>
           {label}
         </label>
       )}
@@ -52,7 +53,11 @@ const TextInput = ({
         <input
           id={name}
           name={name}
-          className={`${STYLES.input} ${className}`}
+          className={`
+            ${STYLES.input} 
+            ${className} 
+            ${error ? 'border-red-400' : ''} 
+          `}
           type={inputType}
           placeholder={placeholder}
           onChange={handleInputChange}
@@ -70,7 +75,10 @@ const TextInput = ({
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? (
-              <AiOutlineEyeInvisible className={STYLES.icon} aria-hidden="true" />
+              <AiOutlineEyeInvisible
+                className={STYLES.icon}
+                aria-hidden="true"
+              />
             ) : (
               <AiOutlineEye className={STYLES.icon} aria-hidden="true" />
             )}
@@ -78,11 +86,7 @@ const TextInput = ({
         )}
       </div>
       {error && (
-        <div
-          id={`${name}-error`}
-          className={STYLES.errorText}
-          role="alert"
-        >
+        <div id={`${name}-error`} className={STYLES.errorText} role="alert">
           {error}
         </div>
       )}

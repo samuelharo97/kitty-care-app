@@ -1,121 +1,128 @@
-import { FC, useState } from 'react';
+import React, { FC, useState } from 'react';
 import TextInput from './Input';
-import { OTPLoginFormProps } from './types';
-import { OTPForm } from '../shared/OTPForm';
 
-export const LoginForm: FC<OTPLoginFormProps> = ({
-    error,
-    isLoading,
-    handleEmailSubmit,
-    handleOTPSubmit,
+interface LoginFormProps {
+  error?: string;
+  isLoading?: boolean;
+  onLogin?: (email: string, password: string) => void;
+  onForgotPassword?: () => void;
+}
+
+export const LoginForm: FC<LoginFormProps> = ({
+  error,
+  isLoading,
+  onLogin,
+  onForgotPassword
 }) => {
-    const [email, setEmail] = useState('');
-    const [showOTPInput, setShowOTPInput] = useState(false);
-    const [otp, setOTP] = useState('');
-    const [emailError, setEmailError] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-    const validateEmail = (email: string) => {
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}$/;
-        if (!email) {
-            setEmailError('Email is required');
-            return false;
-        }
-        if (!emailRegex.test(email)) {
-            setEmailError('Please enter a valid email address');
-            return false;
-        }
-        setEmailError('');
-        return true;
-    };
+  const validateEmail = (value: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}$/;
+    if (!value) {
+      setEmailError('Email is required');
+      return false;
+    }
+    if (!emailRegex.test(value)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
 
-    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newEmail = e.target.value;
-        setEmail(newEmail);
-        if (newEmail) {
-            validateEmail(newEmail);
-        } else {
-            setEmailError('');
-        }
-    };
+  const validatePassword = (value: string) => {
+    if (!value) {
+      setPasswordError('Password is required');
+      return false;
+    }
+    if (value.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      return false;
+    }
+    setPasswordError('');
+    return true;
+  };
 
-    const handleOTPChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Only allow numbers and limit to 6 digits
-        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-        setOTP(value);
-    };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
 
-    const onEmailSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!validateEmail(email)) {
-            return;
-        }
-        const success = await handleEmailSubmit(email);
-        if (success) {
-            setShowOTPInput(true);
-        }
-    };
+    if (isEmailValid && isPasswordValid && onLogin) {
+      onLogin(email, password);
+    }
+  };
 
-    const onOTPSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        handleOTPSubmit(email, otp);
-    };
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev);
+  };
 
-    return (
-        <div className="w-full">
-            {!showOTPInput ? (
-                <form
-                    onSubmit={onEmailSubmit}
-                    className="w-full flex flex-col gap-2"
-                    noValidate
-                    aria-label="Email verification form"
-                >
-                    <TextInput
-                        name="email"
-                        label="Email"
-                        type="email"
-                        placeholder="name@email.com"
-                        className={emailError || error?.email ? 'border-red-500' : ''}
-                        onChange={handleEmailChange}
-                        error={emailError || error?.email}
-                        aria-invalid={!!(emailError || error?.email)}
-                    />
+  return (
+    <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto">
+      <TextInput
+        type="email"
+        name="email"
+        placeholder="name@email.com"
+        value={email}
+        label="Email"
+        onChange={e => {
+          setEmail(e.target.value);
+          validateEmail(e.target.value);
+        }}
+        error={emailError}
+        aria-invalid={!!emailError}
+      />
 
-                    {error?.general && (
-                        <div
-                            className="text-red-500 text-base text-center mt-4"
-                            role="alert"
-                            aria-live="polite"
-                        >
-                            {error.general}
-                        </div>
-                    )}
+      <div className="relative">
+        <TextInput
+          label="Password"
+          type={showPassword ? 'text' : 'password'}
+          name="password"
+          placeholder="Password (8+ characters)"
+          value={password}
+          onChange={e => {
+            setPassword(e.target.value);
+            validatePassword(e.target.value);
+          }}
+          error={passwordError}
+          aria-invalid={!!passwordError}
+        />
+        <button
+          type="button"
+          onClick={togglePasswordVisibility}
+          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500"
+          aria-label="Toggle password visibility"
+        ></button>
+      </div>
 
-                    <button
-                        type="submit"
-                        className="w-full h-[55px] mt-6 text-base sm:text-xl 
-                                 bg-blue-600 text-white rounded-2xl
-                                 hover:bg-blue-700 active:bg-blue-800
-                                 disabled:bg-blue-400 disabled:cursor-not-allowed
-                                 transition-colors duration-200"
-                        disabled={isLoading}
-                        aria-busy={isLoading}
-                    >
-                        {isLoading ? 'Sending code...' : 'Send Login Code'}
-                    </button>
-                </form>
-            ) : (
-                <OTPForm
-                    email={email}
-                    isLoading={isLoading}
-                    error={error}
-                    onOTPSubmit={onOTPSubmit}
-                    onOTPChange={handleOTPChange}
-                    onBackToEmail={() => setShowOTPInput(false)}
-                    handleEmailSubmit={handleEmailSubmit}
-                />
-            )}
-        </div>
-    );
+      <div className="flex justify-end mt-1">
+        <span
+          onClick={() => onForgotPassword?.()}
+          className="text-pink-500 text-sm cursor-pointer hover:underline"
+        >
+          Forgot password?
+        </span>
+      </div>
+
+      {error && (
+        <p className="text-red-500 text-sm mt-2" role="alert">
+          {error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        className="w-full h-[50px] bg-blue-600 text-white text-base font-medium mt-5 rounded-md
+                   hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed
+                   transition-colors duration-200"
+        disabled={isLoading}
+      >
+        {isLoading ? 'Loading...' : 'Login'}
+      </button>
+    </form>
+  );
 };
-
-export default LoginForm; 
