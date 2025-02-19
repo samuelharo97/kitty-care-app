@@ -1,5 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { signUpAPI, loginAPI, verifyOTPAPI } from '../../services/api';
+import {
+  signUpAPI,
+  loginAPI,
+  verifyOTPAPI,
+  loginWithGoogleAPI
+} from '../../services/api';
 import { LoginState, SignupState, UserState } from '../../utils/types';
 import { setAuthToken, clearTokens } from '../../utils/auth';
 import { fetchCatsAsync } from './catsSlice';
@@ -11,7 +16,7 @@ const initialState: UserState = {
   email: '',
   isAuthenticated: false,
   status: '',
-  error: '',
+  error: ''
 };
 
 export const signUpUserAsync = createAsyncThunk(
@@ -26,7 +31,7 @@ export const signUpUserAsync = createAsyncThunk(
         email: userData.email,
         photo: response.photo || ''
       });
-      
+
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -38,15 +43,18 @@ export const signUpUserWithOTPAsync = createAsyncThunk(
   'user/signUpUserWithOTP',
   async (credentials: SignupState, { rejectWithValue }) => {
     try {
-      let response = await verifyOTPAPI(credentials.email, credentials.token || '');
-      
+      const response = await verifyOTPAPI(
+        credentials.email,
+        credentials.token || ''
+      );
+
       setAuthToken({
         token: response.session.access_token,
         expiresIn: response.session.expires_in,
         email: credentials.email,
         photo: response.user.user_metadata?.avatar_url || ''
       });
-      
+
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -88,7 +96,10 @@ export const loginUserAsync = createAsyncThunk(
 
 export const loginUserWithOTPAsync = createAsyncThunk(
   'user/loginUserWithOTP',
-  async (credentials: { email: string, token: string }, { rejectWithValue, dispatch }) => {
+  async (
+    credentials: { email: string; token: string },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
       const response = await verifyOTPAPI(credentials.email, credentials.token);
 
@@ -100,7 +111,9 @@ export const loginUserWithOTPAsync = createAsyncThunk(
       });
 
       try {
-        await dispatch(fetchSubscriptionsAsync(response.session.access_token)).unwrap();
+        await dispatch(
+          fetchSubscriptionsAsync(response.session.access_token)
+        ).unwrap();
       } catch (error) {
         // Silently ignore any errors from fetchSubscriptionsAsync
       }
@@ -118,6 +131,24 @@ export const loginUserWithOTPAsync = createAsyncThunk(
   }
 );
 
+export const loginUserWithGoogleAsync = createAsyncThunk(
+  'user/loginUserWithGoogle',
+  async (idToken: string, { rejectWithValue }) => {
+    try {
+      const response = await loginWithGoogleAPI(idToken);
+      const { access_token: token, expires_in: expiresIn } = response.session;
+      setAuthToken({
+        token,
+        expiresIn,
+        email: response.user.email,
+        photo: response.user.picture || ''
+      });
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 export const userSlice = createSlice({
   name: 'user',
@@ -129,11 +160,11 @@ export const userSlice = createSlice({
     logout: () => {
       clearTokens();
       return initialState;
-    },
+    }
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
-      .addCase(signUpUserAsync.pending, (state) => {
+      .addCase(signUpUserAsync.pending, state => {
         state.status = 'loading';
       })
       .addCase(signUpUserAsync.fulfilled, (state, action) => {
@@ -148,7 +179,7 @@ export const userSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload as string;
       })
-      .addCase(loginUserAsync.pending, (state) => {
+      .addCase(loginUserAsync.pending, state => {
         state.status = 'loading';
       })
       .addCase(loginUserAsync.fulfilled, (state, action) => {
@@ -163,8 +194,20 @@ export const userSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload as string;
       })
-  },
+      .addCase(loginUserWithGoogleAsync.fulfilled, (state, action) => {
+        if (action.payload?.session.access_token) {
+          Object.assign(state, {
+            status: 'succeeded',
+            isAuthenticated: true
+          });
+        }
+      })
+      .addCase(loginUserWithGoogleAsync.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload as string;
+      });
+  }
 });
 
 export const { signUpUser, logout } = userSlice.actions;
-export default userSlice.reducer; 
+export default userSlice.reducer;
