@@ -30,7 +30,7 @@ This repository contains a solution for the KittyCare take-home challenge. The s
 cd kittycare_backend
 pnpm install
 create .env following .env-example
-pnpm run dev```
+pnpm run dev
 ````
 
 ## 2. Frontend Setup
